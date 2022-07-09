@@ -1,11 +1,15 @@
 from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus
+from scripts.epistate_simulator import main as epistate_simulator
+from scripts.random_simulator import main as random_simulator
+
 import numpy as np
 import pandas as pd
+import re
 
 runs = pd.read_csv(config["run_file"]).set_index("param_id")
 param_ids = runs.index
 name_to_model = {"celfie":Celfie, "celfie-plus":CelfiePlus, "epistate":Epistate, "epistate-plus":EpistatePlus}
-
+name_to_simulator = {"epistate":epistate_simulator, "random":random_simulator}
 
 rule simulate_data: #should I separate atlas from mixture?
 
@@ -15,28 +19,32 @@ rule simulate_data: #should I separate atlas from mixture?
         sim_config = lambda wildcards: runs[runs.index == int(wildcards.param_id)]
     output:
         data="data/{param_id}_rep{instance_id}_data.npy",
-        metadata="data/{param_id}_rep{instance_id}_metadata.npy"
-    shell:
-        """python3 epistate_simulator.py {params.t} {params.depth} {params.m_per_window} {params.windows_per_t} """ +\
-            """{params.thetaL} {params.thetaH} {params.lambda_high} {params.lambda_low} """+\
-                """{output.data} {output.metadata} {params.alpha} 2> {log} """
-
+        metadata=expand("data/{{param_id}}_rep{{instance_id}}_metadata_{model}.npy", model=config["models"])
+    run:
+        sim_config = params.sim_config
+        alpha = np.array([float(x) for x in re.split(',',sim_config["alpha"].strip("[]").replace(" ",""))])
+        sim_config["alpha"] = alpha / alpha.sum()
+        sim_config["data_file"] = output.data
+        sim_config["metadata_files"] = output.metadata
+        sim_config["models"] = config["models"]
+        name_to_simulator[sim_config["simulator"]](sim_config)
 
 rule run_model:
     input:
         data = "data/{param_id}_rep{instance_id}_data.npy", \
-        metadata = "data/{param_id}_rep{instance_id}_metadata.npy"  #lambdas
+        metadata = "data/{param_id}_rep{instance_id}_metadata_{model}.npy"  #lambdas
     params:
         instance="{instance_id}",
-        model="{model}",
         run_config=lambda wildcards: runs[runs.index == int(wildcards.param_id)]
     output:
         "interim/{param_id}_rep{instance_id}_{model}.npy"
     run:
         model = name_to_model(params.model)
-        runner = model(params.run_config) #TODO add input and output files to config
+        run_config = params.run_config
+        run_config["data"], run_config["metadata"] = input
+        run_config["outfile"] = output[0]
+        runner = model(run_config)
         runner.run_from_npy()
-
 
 rule write_output:
     input:

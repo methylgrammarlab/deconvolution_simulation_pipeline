@@ -6,7 +6,9 @@
 #
 #################################################
 import numpy as np
-import re
+import sys
+sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools")
+from epiread_tools.naming_conventions import *
 
 def generate_atlas(t, m_per_window, n_windows):
     '''
@@ -43,28 +45,12 @@ def generate_mixture(atlas, alpha, depth):
     probability = atlas[z, :]
 
     mixture = np.random.binomial(1, probability)
+    res = np.zeros((mixture.shape))
+    res[mixture==0] = UNMETHYLATED
+    res[mixture==1] = METHYLATED
+    return res
 
-    return mixture
-
-def sample_atlas(atlas, depth):
-    '''
-    generate reads of pure atlas
-    :param atlas: beta values per cell type
-    :param depth: number of reads to generate per cell type
-    :return: list of reads per atlas region, origin (z values) for reads
-    '''
-    sample = []
-    z = []
-    t = atlas[0].shape[0] #number of cell types
-    for i in range(len(atlas)):
-        read_source = np.repeat(np.arange(t), depth)
-        z.append(read_source)
-        probability = atlas[i][read_source,:]
-        mixture = np.random.binomial(1, probability)
-        sample.append(mixture)
-    return sample, z
-
-def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0):
+def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0): #TODO: not sure lambda is right
     thetaH = []
     thetaL = []
     lambdas = []
@@ -79,37 +65,41 @@ def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0):
     return thetaH, thetaL, lambdas
 
 
-def generate_data(args):
-    atlas = generate_atlas(args.t, args.m_per_window, args.windows_per_t*args.t)
-    reads = [generate_mixture(x, args.alpha, args.depth) for x in atlas]
-    thetaH, thetaL, lambdas =  make_thetas_and_lambdas(atlas, args.t, args.windows_per_t)
+def generate_data(config):
+    atlas = generate_atlas(config["t"], config["m_per_region"], config["t"]*config["regions_per_t"])
+    reads = [generate_mixture(x, config["alpha"], config["coverage"]) for x in atlas]
+    thetaH, thetaL, lambdas =  make_thetas_and_lambdas(atlas, config["t"], config["regions_per_t"])
     return atlas, reads, thetaH, thetaL, lambdas
+
 #%%
-def write_output(reads, atlas, data_file, thetaH, thetaL, lambdas, celfie_metadata_file, epistate_metadata_file):
+def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
-    np.save(celfie_metadata_file, atlas, allow_pickle=True)
-    np.save(epistate_metadata_file, [thetaH, thetaL, lambdas], allow_pickle=True)
+
+def write_celfie_output(output_file, atlas, atlas_coverage=1000):
+    y = np.vstack([np.sum(x*atlas_coverage, axis=1) for x in atlas]).T
+    y_depths = np.ones((y.shape))
+    y_depths.fill(atlas_coverage)
+    np.save(output_file, [y, y_depths], allow_pickle=True)
+
+def write_celfie_plus_output(output_file, atlas):
+    np.save(output_file, atlas, allow_pickle=True)
+
+def write_epistate_output(output_file, thetaH, thetaL, lambdas):
+    np.save(output_file, [thetaH, thetaL, lambdas], allow_pickle=True)
+
+def main(config):
+    atlas, reads, thetaH, thetaL, lambdas = generate_data(config)
+    save_mixture(config["data_file"], reads)
+    for model, outfile in zip(config["models"], config["metadata_files"]):
+        if model == "celfie":
+            write_celfie_output(outfile, atlas)
+        elif model == "celfie-plus":
+            write_celfie_plus_output(outfile, atlas)
+        else:
+            write_epistate_output(outfile, thetaH, thetaL, lambdas)
 
 
-def main(args):
-    atlas, reads, thetaH, thetaL, lambdas = generate_data(args)
-    write_output(reads, atlas, args.data_file, thetaH, thetaL, lambdas,
-                 args.celfie_metadata_file, args.epistate_metadata_file)
-
-import argparse
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("t", type=int)
-parser.add_argument("depth", type=int)
-parser.add_argument("m_per_window", type=int)
-parser.add_argument("windows_per_t", type=int)
-parser.add_argument("data_file", type=str)
-parser.add_argument("celfie_metadata_file", type=str)
-parser.add_argument("epistate_metadata_file", type=str)
-parser.add_argument('alpha', type=str)
-args = parser.parse_args()
-args.alpha = np.array([float(x) for x in re.split(',', args.alpha.strip("[]").replace(" ",""))])
-args.alpha = args.alpha / args.alpha.sum()
-main(args)
-#%%
+# config = {'m_per_region': 5, 'regions_per_t': 3, 't': 2, "alpha": np.array([0.9,0.1]), "coverage": 10,
+#            "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy",
+#            "metadata_files":["1.npy", "2.npy", "3.npy"]}
+# main(config)
