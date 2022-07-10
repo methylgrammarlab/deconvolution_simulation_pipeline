@@ -50,7 +50,7 @@ def generate_mixture(atlas, alpha, depth):
     res[mixture==1] = METHYLATED
     return res
 
-def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0): #TODO: not sure lambda is right
+def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0):
     thetaH = []
     thetaL = []
     lambdas = []
@@ -67,7 +67,7 @@ def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0): #TODO: no
 
 def generate_data(config):
     atlas = generate_atlas(config["t"], config["m_per_region"], config["t"]*config["regions_per_t"])
-    reads = [generate_mixture(x, config["alpha"], config["coverage"]) for x in atlas]
+    reads = [generate_mixture(x, config["true_alpha"], config["coverage"]) for x in atlas]
     thetaH, thetaL, lambdas =  make_thetas_and_lambdas(atlas, config["t"], config["regions_per_t"])
     return atlas, reads, thetaH, thetaL, lambdas
 

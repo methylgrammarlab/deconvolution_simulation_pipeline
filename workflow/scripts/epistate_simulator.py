@@ -39,7 +39,7 @@ def generate_atlas(config): #get lambdas, thetas
     high = adjust_length(config["theta_high"], config["m_per_region"])
     low = adjust_length(config["theta_low"], config["m_per_region"])
 
-    l_t = np.ones((config["t"], config["m_per_region"]))
+    l_t = np.ones((config["t"]))
     l_t.fill(config["lambda_high"])
     for t in range(config["t"]):
         for i in range(config["regions_per_t"]):
@@ -62,29 +62,31 @@ def generate_mixture(atlas, alpha, coverage):
     :return: mixture
     '''
     theta_high, theta_low, lambda_t = atlas
-    t, m_per_region = lambda_t[0].shape
+    t, m_per_region = lambda_t[0].shape[0], theta_low[0].shape[0]
     n_regions = len(lambda_t)
-    mixture = [[]*n_regions]
+    mixture = [[] for x in range(n_regions)]
     n_reads = coverage*n_regions
     #select which cell type
     true_z = np.random.choice(np.arange(t), size=n_reads, p=alpha, replace=True)
     #select which regions
-    region_indicator = np.random.choice(np.arange(n_regions), size=n_reads, p=alpha, replace=True)
+    region_indicator = np.random.choice(np.arange(n_regions), size=n_reads, replace=True)
     #generate from theta
     for i in range(n_reads):
-        mu_i = np.random.binomial(1, lambda_t[true_z[i]])
+        mu_i = np.random.binomial(1, p=lambda_t[region_indicator[i]][true_z[i]])
         theta = (theta_low, theta_high)[mu_i][region_indicator[i]]
-        row = (UNMETHYLATED, METHYLATED)[np.random.binomial(n=1, p=theta, size=m_per_region)]
+        row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=theta, size=m_per_region)]
         mixture[region_indicator[i]].append(row)
+    mixture = [np.vstack(x) for x in mixture]
     return mixture
 
 def atlas_to_beta_matrices(atlas):
     thetaH, thetaL, lambdas = atlas
+    t, m_per_region = lambdas[0].shape[0], thetaL[0].shape[0]
     beta_tm = []
     for i in range(len(lambdas)):
-        beta = lambdas[i]*thetaH[i] + (1-lambdas[i])*thetaL[i]
+        beta = lambdas[i][:, np.newaxis]*thetaH[i]+ (1-lambdas[i])[:, np.newaxis]*thetaL[i]
         beta_tm.append(beta)
-    return beta
+    return beta_tm
 
 def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
@@ -105,7 +107,7 @@ def write_epistate_output(output_file, atlas):
 def main(config):
     atlas = generate_atlas(config)
     beta = atlas_to_beta_matrices(atlas)
-    reads = generate_mixture(atlas, config["alpha"], config["coverage"])
+    reads = generate_mixture(atlas, config["true_alpha"], config["coverage"])
     save_mixture(config["data_file"], reads)
     for model, outfile in zip(config["models"], config["metadata_files"]):
         if model == "celfie":

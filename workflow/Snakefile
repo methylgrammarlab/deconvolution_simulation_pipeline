@@ -1,16 +1,6 @@
-##### setup report #####
 configfile: "config/config.json"
 
-
-# report: "report/workflow.rst"
-
-##### load rules #####
-
-
 include: "rules/deconvolution_simulation.smk"
-
-##### target rules #####
-
 
 rule all:
     input:
