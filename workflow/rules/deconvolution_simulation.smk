@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models")
+
 from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus
 from scripts.epistate_simulator import main as epistate_simulator
 from scripts.random_simulator import main as random_simulator

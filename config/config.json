@@ -1,6 +1,6 @@
 {
-  "run_file": "resources/length_variation.csv",
-  "name": "celfie_figure1_v12",
-  "reps": 10,
-  "models": ["celfie", "celfie-plus"]
+  "run_file": "resources/test_config.csv",
+  "name": "test_run",
+  "reps": 1,
+  "models": ["celfie", "celfie-plus", "epistate", "epistate-plus"]
 }
