@@ -25,30 +25,31 @@ def generate_atlas(t, m_per_window, n_windows):
         ))
     return atlas
 
-def generate_mixture(atlas, alpha, depth): #todo: distribute randomly among regions
+def generate_mixture(atlas, alpha, coverage): #todo: distribute randomly among regions
     '''
     sample WGBS sequences from an atlas of methylation probabilities
     :param atlas: t cell types by m CpGs. filled with beta values
     :param alpha: proportions of cell types to sample. ordered by atlas
-    :param depth: amount of reads to sample, each will be the entire
+    :param coverage: amount of reads to sample, each will be the entire
                     length of the atlas (m CpGs)
     :return: depthXm methylayion np array
     '''
-    t, m = atlas.shape #cell types, cpgs
-    z = np.random.choice(
-        t,
-        depth,
-        replace=True,
-        p=alpha,
-    )  # assign reads based on the cell type proportions
+    t, m = atlas[0].shape #cell types, cpgs
 
-    probability = atlas[z, :]
+    n_regions = len(atlas)
+    n_reads = coverage*n_regions
 
-    mixture = np.random.binomial(1, probability)
-    res = np.zeros((mixture.shape))
-    res[mixture==0] = UNMETHYLATED
-    res[mixture==1] = METHYLATED
-    return res
+    mixture = [[] for x in range(n_regions)]
+    region_indicator = np.random.choice(np.arange(n_regions), size=n_reads, replace=True)
+    true_z = np.random.choice(np.arange(t), size=n_reads, p=alpha, replace=True)
+
+    for i in range(n_reads):
+        beta = atlas[region_indicator[i]][true_z[i],:]
+        row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=beta, size=m)]
+        mixture[region_indicator[i]].append(row)
+    mixture = [np.vstack(x) if len(x) else np.array([]) for x in mixture]
+
+    return mixture
 
 def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0):
     thetaH = []
@@ -67,7 +68,7 @@ def make_thetas_and_lambdas(atlas, t, windows_per_t, Lhigh=1, Llow=0):
 
 def generate_data(config):
     atlas = generate_atlas(config["t"], config["m_per_region"], config["t"]*config["regions_per_t"])
-    reads = [generate_mixture(x, config["true_alpha"], config["coverage"]) for x in atlas]
+    reads = generate_mixture(atlas, config["true_alpha"], config["coverage"])
     thetaH, thetaL, lambdas =  make_thetas_and_lambdas(atlas, config["t"], config["regions_per_t"])
     return atlas, reads, thetaH, thetaL, lambdas
 
