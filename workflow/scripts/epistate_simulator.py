@@ -76,7 +76,7 @@ def generate_mixture(atlas, alpha, coverage):
         theta = (theta_low, theta_high)[mu_i][region_indicator[i]]
         row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=theta, size=m_per_region)]
         mixture[region_indicator[i]].append(row)
-    mixture = [np.vstack(x) for x in mixture]
+    mixture = [np.vstack(x) if len(x) else np.array([]) for x in mixture]
     return mixture
 
 def atlas_to_beta_matrices(atlas):
@@ -93,8 +93,9 @@ def save_mixture(data_file, reads):
 
 def write_celfie_output(output_file, beta_tm, atlas_coverage=1000):
     y = np.vstack([np.sum(x*atlas_coverage, axis=1) for x in beta_tm]).T
+    m_per_region = beta_tm[0].shape[1]
     y_depths = np.ones((y.shape))
-    y_depths.fill(atlas_coverage)
+    y_depths.fill(atlas_coverage*m_per_region)
     np.save(output_file, [y, y_depths], allow_pickle=True)
 
 def write_celfie_plus_output(output_file, beta_tm):
@@ -117,3 +118,20 @@ def main(config):
         else:
             write_epistate_output(outfile, atlas)
 
+# config = {'simulator': 'epistate', 't': 25, 'coverage': 10, 'm_per_region': 6, 'regions_per_t': 40, 'num_iterations': 1000,
+#           'atlas_coverage': 1000, 'random_restarts': 1, "stop_criterion":0.001,
+#           'theta_high': 0.66, 'theta_low': 0.34, 'lambda_high': 1, 'lambda_low': 0,
+#           "models":["celfie-plus", "celfie", "epistate-plus","epistate"],
+#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/length_variation/16_rep0_data.npy",
+#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_celfie-plus.npy",
+# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_celfie.npy",
+# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_epistate-plus.npy",
+# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_epistate.npy"],
+#
+#           "outfile":None}
+#
+#
+# a = np.arange(1,26)
+# b = a/np.sum(a)
+# config["true_alpha"] = b
+# main(config)

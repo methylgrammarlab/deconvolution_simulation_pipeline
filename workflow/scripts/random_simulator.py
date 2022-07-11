@@ -25,7 +25,7 @@ def generate_atlas(t, m_per_window, n_windows):
         ))
     return atlas
 
-def generate_mixture(atlas, alpha, depth):
+def generate_mixture(atlas, alpha, depth): #todo: distribute randomly among regions
     '''
     sample WGBS sequences from an atlas of methylation probabilities
     :param atlas: t cell types by m CpGs. filled with beta values
@@ -76,9 +76,10 @@ def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
 
 def write_celfie_output(output_file, atlas, atlas_coverage=1000):
+    m_per_region = atlas[0].shape[1]
     y = np.vstack([np.sum(x*atlas_coverage, axis=1) for x in atlas]).T
     y_depths = np.ones((y.shape))
-    y_depths.fill(atlas_coverage)
+    y_depths.fill(atlas_coverage*m_per_region)
     np.save(output_file, [y, y_depths], allow_pickle=True)
 
 def write_celfie_plus_output(output_file, atlas):

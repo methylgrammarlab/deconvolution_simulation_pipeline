@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models")
+sys.path.append("/Users/ireneu/PycharmProjects/")
 from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus
 from scripts.epistate_simulator import main as epistate_simulator
 from scripts.random_simulator import main as random_simulator
@@ -18,22 +18,23 @@ rule simulate_data: #should I separate atlas from mixture?
         simulator = lambda wildcards: str(runs.simulator[runs.index == int(wildcards.param_id)].values[0]),
         sim_config = lambda wildcards: runs[runs.index == int(wildcards.param_id)].iloc[0,:].to_dict()
     output:
-        data="data/{param_id}_rep{instance_id}_data.npy",
-        metadata=expand("data/{{param_id}}_rep{{instance_id}}_metadata_{model}.npy", model=config["models"])
+        data=expand("data/{name}/{{param_id}}_rep{{instance_id}}_data.npy", name=config["name"]),
+        metadata=expand("data/{name}/{{param_id}}_rep{{instance_id}}_metadata_{model}.npy",
+            model=config["models"], name=config["name"])
 
     run:
         sim_config = params.sim_config
         alpha = np.array([float(x) for x in re.split(',',sim_config["true_alpha"].strip("[]").replace(" ",""))])
         sim_config["true_alpha"] = alpha / alpha.sum()
-        sim_config["data_file"] = output.data
+        sim_config["data_file"] = output.data[0]
         sim_config["metadata_files"] = output.metadata
         sim_config["models"] = config["models"]
         name_to_simulator[params.simulator](sim_config)
 
 rule run_model:
     input:
-        data = "data/{param_id}_rep{instance_id}_data.npy",
-        metadata = "data/{param_id}_rep{instance_id}_metadata_{model}.npy"  #lambdas
+        data=expand("data/{name}/{{param_id}}_rep{{instance_id}}_data.npy", name=config["name"]),
+        metadata=expand("data/{name}/{{param_id}}_rep{{instance_id}}_metadata_{{model}}.npy" ,name=config["name"])
     params:
         instance="{instance_id}",
         run_config=lambda wildcards: runs[runs.index == int(wildcards.param_id)].iloc[0,:].to_dict()
@@ -42,7 +43,7 @@ rule run_model:
     run:
         model = name_to_model[wildcards.model]
         run_config = params.run_config
-        run_config["data_file"], run_config["metadata_file"] = input.data, input.metadata
+        run_config["data_file"], run_config["metadata_file"] = input.data[0], input.metadata
         run_config["outfile"] = output[0]
         runner = model(run_config)
         runner.run_from_npy()
