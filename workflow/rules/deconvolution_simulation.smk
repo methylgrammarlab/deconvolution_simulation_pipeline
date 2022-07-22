@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/Users/ireneu/PycharmProjects/")
+sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models")
 from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus
 from scripts.epistate_simulator import main as epistate_simulator
 from scripts.random_simulator import main as random_simulator
@@ -43,7 +43,7 @@ rule run_model:
     run:
         model = name_to_model[wildcards.model]
         run_config = params.run_config
-        run_config["data_file"], run_config["metadata_file"] = input.data[0], input.metadata
+        run_config["data_file"], run_config["metadata_file"] = input.data[0], input.metadata[0]
         run_config["outfile"] = output[0]
         runner = model(run_config)
         runner.run_from_npy()

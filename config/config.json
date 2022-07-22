@@ -1,6 +1,6 @@
 {
-  "run_file": "resources/length_variation.csv",
-  "name": "length_variation",
-  "reps": 3,
-  "models": ["celfie", "celfie-plus", "epistate", "epistate-plus"]
+  "run_file": "resources/VAI_poster_v3.csv",
+  "name": "VAI3",
+  "reps": 50,
+  "models": ["celfie", "celfie-plus"]
 }

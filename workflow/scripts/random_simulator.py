@@ -10,6 +10,7 @@ import sys
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools")
 from epiread_tools.naming_conventions import *
 
+
 def generate_atlas(t, m_per_window, n_windows):
     '''
     simulate pure cell types
@@ -25,7 +26,7 @@ def generate_atlas(t, m_per_window, n_windows):
         ))
     return atlas
 
-def generate_mixture(atlas, alpha, coverage): #todo: distribute randomly among regions
+def generate_mixture(atlas, alpha, coverage):
     '''
     sample WGBS sequences from an atlas of methylation probabilities
     :param atlas: t cell types by m CpGs. filled with beta values
@@ -76,11 +77,10 @@ def generate_data(config):
 def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
 
-def write_celfie_output(output_file, atlas, atlas_coverage=1000):
-    m_per_region = atlas[0].shape[1]
-    y = np.vstack([np.sum(x*atlas_coverage, axis=1) for x in atlas]).T
+def write_celfie_output(output_file, atlas, atlas_coverage=1000): #no summing
+    y = np.hstack([(x*atlas_coverage) for x in atlas])
     y_depths = np.ones((y.shape))
-    y_depths.fill(atlas_coverage*m_per_region)
+    y_depths.fill(atlas_coverage)
     np.save(output_file, [y, y_depths], allow_pickle=True)
 
 def write_celfie_plus_output(output_file, atlas):
@@ -101,7 +101,8 @@ def main(config):
             write_epistate_output(outfile, thetaH, thetaL, lambdas)
 
 
-# config = {'m_per_region': 5, 'regions_per_t': 3, 't': 2, "alpha": np.array([0.9,0.1]), "coverage": 10,
-#            "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy",
-#            "metadata_files":["1.npy", "2.npy", "3.npy"]}
-# main(config)
+config = {'m_per_region': 5, 'regions_per_t': 3, 't': 2, "true_alpha": np.array([0.9,0.1]), "coverage": 10,
+           "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy",
+           "metadata_files":["1.npy", "2.npy", "3.npy"]}
+main(config)
+#%%

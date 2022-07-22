@@ -1,0 +1,2 @@
+param_id,simulator,t,coverage,m_per_region,regions_per_t,num_iterations,stop_criterion,atlas_coverage,random_restarts,true_alpha
+1,random,6,10,5,100,1000,0.001,1000,1,"[0.01587302,0.03174603,0.06349206,0.12698413,0.25396825,0.50793651]"
