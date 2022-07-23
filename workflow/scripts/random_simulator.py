@@ -26,7 +26,7 @@ def generate_atlas(t, m_per_window, n_windows):
         ))
     return atlas
 
-def generate_mixture(atlas, alpha, coverage):
+def generate_mixture(atlas, alpha, coverage): #TODO: re-implement random regions
     '''
     sample WGBS sequences from an atlas of methylation probabilities
     :param atlas: t cell types by m CpGs. filled with beta values
@@ -37,17 +37,17 @@ def generate_mixture(atlas, alpha, coverage):
     '''
     t, m = atlas[0].shape #cell types, cpgs
 
-    n_regions = len(atlas)
-    n_reads = coverage*n_regions
+    mixture = []
 
-    mixture = [[] for x in range(n_regions)]
-    region_indicator = np.random.choice(np.arange(n_regions), size=n_reads, replace=True)
-    true_z = np.random.choice(np.arange(t), size=n_reads, p=alpha, replace=True)
+    for i in range(len(atlas)):
+        mix = np.zeros((coverage,m))
+        true_z = np.random.choice(np.arange(t), size=coverage, p=alpha, replace=True)
 
-    for i in range(n_reads):
-        beta = atlas[region_indicator[i]][true_z[i],:]
-        row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=beta, size=m)]
-        mixture[region_indicator[i]].append(row)
+        for j in range(coverage):
+            beta = atlas[i][true_z[j], :]
+            row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=beta, size=m)]
+            mix[j,:] = row
+        mixture.append(mix)
     mixture = [np.vstack(x) if len(x) else np.array([]) for x in mixture]
 
     return mixture
@@ -101,8 +101,8 @@ def main(config):
             write_epistate_output(outfile, thetaH, thetaL, lambdas)
 
 
-config = {'m_per_region': 5, 'regions_per_t': 3, 't': 2, "true_alpha": np.array([0.9,0.1]), "coverage": 10,
+config = {'m_per_region': 5, 'regions_per_t': 300, 't': 2, "true_alpha": np.array([0.9,0.1]), "coverage": 10,
            "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy",
            "metadata_files":["1.npy", "2.npy", "3.npy"]}
-main(config)
+# main(config)
 #%%

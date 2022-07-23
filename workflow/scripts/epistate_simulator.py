@@ -52,8 +52,7 @@ def generate_atlas(config): #get lambdas, thetas
 
 #%%
 
-
-def generate_mixture(atlas, alpha, coverage):
+def generate_mixture(atlas, alpha, coverage): #TODO: re-implement random regions
     '''
 
     :param atlas: theta_high, theta_low, lambda_t
@@ -64,18 +63,17 @@ def generate_mixture(atlas, alpha, coverage):
     theta_high, theta_low, lambda_t = atlas
     t, m_per_region = lambda_t[0].shape[0], theta_low[0].shape[0]
     n_regions = len(lambda_t)
-    mixture = [[] for x in range(n_regions)]
-    n_reads = coverage*n_regions
-    #select which cell type
-    true_z = np.random.choice(np.arange(t), size=n_reads, p=alpha, replace=True)
-    #select which regions
-    region_indicator = np.random.choice(np.arange(n_regions), size=n_reads, replace=True)
-    #generate from theta
-    for i in range(n_reads):
-        mu_i = np.random.binomial(1, p=lambda_t[region_indicator[i]][true_z[i]])
-        theta = (theta_low, theta_high)[mu_i][region_indicator[i]]
-        row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=theta, size=m_per_region)]
-        mixture[region_indicator[i]].append(row)
+    mixture = []
+
+    for i in range(n_regions):
+        mix = np.zeros((coverage,m_per_region))
+        true_z = np.random.choice(np.arange(t), size=coverage, p=alpha, replace=True)
+        for j in range(coverage):
+            mu_i = np.random.binomial(1, p=lambda_t[i][true_z[j]])
+            theta = (theta_low, theta_high)[mu_i][i]
+            row = np.array([UNMETHYLATED, METHYLATED])[np.random.binomial(n=1, p=theta, size=m_per_region)]
+            mix[j, :] = row
+        mixture.append(mix)
     mixture = [np.vstack(x) if len(x) else np.array([]) for x in mixture]
     return mixture
 
@@ -91,11 +89,10 @@ def atlas_to_beta_matrices(atlas):
 def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
 
-def write_celfie_output(output_file, beta_tm, atlas_coverage=1000):
-    y = np.vstack([np.sum(x*atlas_coverage, axis=1) for x in beta_tm]).T
-    m_per_region = beta_tm[0].shape[1]
+def write_celfie_output(output_file, beta_tm, atlas_coverage=1000): #no summing
+    y = np.hstack([(x*atlas_coverage) for x in beta_tm])
     y_depths = np.ones((y.shape))
-    y_depths.fill(atlas_coverage*m_per_region)
+    y_depths.fill(atlas_coverage)
     np.save(output_file, [y, y_depths], allow_pickle=True)
 
 def write_celfie_plus_output(output_file, beta_tm):

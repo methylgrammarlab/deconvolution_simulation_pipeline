@@ -1,6 +1,6 @@
 {
-  "run_file": "resources/VAI_poster_v3.csv",
-  "name": "VAI3",
+  "run_file": "resources/VAI_poster_v6.csv",
+  "name": "VAI6",
   "reps": 50,
   "models": ["celfie", "celfie-plus"]
 }
