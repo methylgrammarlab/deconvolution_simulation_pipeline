@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models")
-from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus
+from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus, ReAtlas
 from scripts.epistate_simulator import main as epistate_simulator
 from scripts.random_simulator import main as random_simulator
 import numpy as np
@@ -9,7 +9,8 @@ import re
 
 runs = pd.read_csv(config["run_file"]).set_index("param_id")
 param_ids = runs.index
-name_to_model = {"celfie":Celfie, "celfie-plus":CelfiePlus, "epistate":Epistate, "epistate-plus":EpistatePlus}
+name_to_model = {"celfie":Celfie, "celfie-plus":CelfiePlus, "epistate":Epistate, "epistate-plus":EpistatePlus,
+                 'sum-celfie':Celfie,'reatlas':ReAtlas}
 name_to_simulator = {"epistate":epistate_simulator, "random":random_simulator}
 
 rule simulate_data: #should I separate atlas from mixture?
@@ -45,6 +46,10 @@ rule run_model:
         run_config = params.run_config
         run_config["data_file"], run_config["metadata_file"] = input.data[0], input.metadata[0]
         run_config["outfile"] = output[0]
+        if wildcards.model == "sum-celfie":
+            run_config["summing"] = True
+        else:
+            run_config["summing"] = False
         runner = model(run_config)
         runner.run_from_npy()
 

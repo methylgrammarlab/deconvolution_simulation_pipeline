@@ -1,6 +1,6 @@
 {
-  "run_file": "resources/VAI_poster_v6.csv",
-  "name": "VAI6",
-  "reps": 50,
-  "models": ["celfie", "celfie-plus"]
+  "run_file": "resources/heterogeneity_params_v2.csv",
+  "name": "heterogeneity_v2",
+  "reps": 10,
+  "models": ["celfie", "celfie-plus",'sum-celfie','reatlas',"epistate-plus"]
 }

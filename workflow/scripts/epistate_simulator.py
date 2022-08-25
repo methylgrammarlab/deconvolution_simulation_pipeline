@@ -98,6 +98,13 @@ def write_celfie_output(output_file, beta_tm, atlas_coverage=1000): #no summing
 def write_celfie_plus_output(output_file, beta_tm):
     np.save(output_file, beta_tm, allow_pickle=True)
 
+def write_reatlas_output(output_file, beta_tm, atlas_coverage=1000):
+    y = [(x*atlas_coverage) for x in beta_tm]
+    y_depths = [np.ones((a.shape)) for a in y]
+    for b in y_depths:
+        b.fill(atlas_coverage)
+    np.save(output_file, [y, y_depths], allow_pickle=True)
+
 def write_epistate_output(output_file, atlas):
     thetaH, thetaL, lambdas = atlas
     np.save(output_file, [thetaH, thetaL, lambdas], allow_pickle=True)
@@ -115,20 +122,14 @@ def main(config):
         else:
             write_epistate_output(outfile, atlas)
 
-# config = {'simulator': 'epistate', 't': 25, 'coverage': 10, 'm_per_region': 6, 'regions_per_t': 40, 'num_iterations': 1000,
+# config = {'simulator': 'epistate', 't': 2, 'coverage': 10, 'm_per_region': 6, 'regions_per_t': 1, 'num_iterations': 1000,
 #           'atlas_coverage': 1000, 'random_restarts': 1, "stop_criterion":0.001,
-#           'theta_high': 0.66, 'theta_low': 0.34, 'lambda_high': 1, 'lambda_low': 0,
-#           "models":["celfie-plus", "celfie", "epistate-plus","epistate"],
-#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/length_variation/16_rep0_data.npy",
-#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_celfie-plus.npy",
-# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_celfie.npy",
-# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_epistate-plus.npy",
-# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/16_rep0_metadata_epistate.npy"],
-#
+#           'theta_high': 0.8, 'theta_low': 0.2, 'lambda_high': 1, 'lambda_low': 0,
+#           "models":["celfie-plus", "celfie"],
+#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_data.npy",
+#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_metadata_celfie-plus.npy",
+# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_metadata_celfie.npy"],
+#             "true_alpha": np.array([0.8, 0.2]),
 #           "outfile":None}
 #
-#
-# a = np.arange(1,26)
-# b = a/np.sum(a)
-# config["true_alpha"] = b
 # main(config)
