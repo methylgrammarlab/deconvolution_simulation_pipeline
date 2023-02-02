@@ -90,7 +90,7 @@ def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
 
 def write_celfie_output(output_file, beta_tm, atlas_coverage=1000): #no summing
-    y = np.hstack([(x*atlas_coverage) for x in beta_tm])
+    y = np.hstack([(x*atlas_coverage) for x in beta_tm]) #TODO: check
     y_depths = np.ones((y.shape))
     y_depths.fill(atlas_coverage)
     np.save(output_file, [y, y_depths], allow_pickle=True)
@@ -115,21 +115,21 @@ def main(config):
     reads = generate_mixture(atlas, config["true_alpha"], config["coverage"])
     save_mixture(config["data_file"], reads)
     for model, outfile in zip(config["models"], config["metadata_files"]):
-        if model == "celfie":
-            write_celfie_output(outfile, beta)
+        if model == "celfie" or model == "sum-celfie":
+            write_celfie_output(outfile, beta, atlas_coverage=config["atlas_coverage"])
         elif model == "celfie-plus":
             write_celfie_plus_output(outfile, beta)
+        elif model == "reatlas":
+            write_reatlas_output(outfile, beta, atlas_coverage=config["atlas_coverage"])
         else:
             write_epistate_output(outfile, atlas)
 
-# config = {'simulator': 'epistate', 't': 2, 'coverage': 10, 'm_per_region': 6, 'regions_per_t': 1, 'num_iterations': 1000,
+# config = {'simulator': 'epistate', 't': 3, 'coverage': 10, 'm_per_region': 12, 'regions_per_t': 15, 'num_iterations': 1000,
 #           'atlas_coverage': 1000, 'random_restarts': 1, "stop_criterion":0.001,
 #           'theta_high': 0.8, 'theta_low': 0.2, 'lambda_high': 1, 'lambda_low': 0,
-#           "models":["celfie-plus", "celfie"],
-#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_data.npy",
-#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_metadata_celfie-plus.npy",
-# "/Users/ireneu/PycharmProjects/deconvolution_simulation_pipeline/data/debugging/test_rep0_metadata_celfie.npy"],
-#             "true_alpha": np.array([0.8, 0.2]),
-#           "outfile":None}
+#           "models":["epistate-plus"],
+#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/simple_3_cell_v2_data.npy",
+#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/simple_3_cell_v2_metadata_epistate-plus.npy"],
+#             "true_alpha": np.array([0.5, 0.3, 0.2])}
 #
 # main(config)

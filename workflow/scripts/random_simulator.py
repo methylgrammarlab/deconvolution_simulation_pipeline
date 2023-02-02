@@ -78,6 +78,7 @@ def save_mixture(data_file, reads):
     np.save(data_file, reads, allow_pickle=True)
 
 def write_celfie_output(output_file, atlas, atlas_coverage=1000): #no summing
+    #TODO: fix
     y = np.hstack([(x*atlas_coverage) for x in atlas])
     y_depths = np.ones((y.shape))
     y_depths.fill(atlas_coverage)
@@ -89,20 +90,32 @@ def write_celfie_plus_output(output_file, atlas):
 def write_epistate_output(output_file, thetaH, thetaL, lambdas):
     np.save(output_file, [thetaH, thetaL, lambdas], allow_pickle=True)
 
+def write_reatlas_output(output_file, beta_tm, atlas_coverage=1000):
+    y = [(x*atlas_coverage) for x in beta_tm]
+    y_depths = [np.ones((a.shape)) for a in y]
+    for b in y_depths:
+        b.fill(atlas_coverage)
+    np.save(output_file, [y, y_depths], allow_pickle=True)
+
 def main(config):
     atlas, reads, thetaH, thetaL, lambdas = generate_data(config)
     save_mixture(config["data_file"], reads)
     for model, outfile in zip(config["models"], config["metadata_files"]):
-        if model == "celfie":
-            write_celfie_output(outfile, atlas)
+        if model == "celfie" or model =="sum-celfie":
+            write_celfie_output(outfile, atlas, config["atlas_coverage"])
         elif model == "celfie-plus":
             write_celfie_plus_output(outfile, atlas)
+        elif model == "reatlas":
+            write_reatlas_output(outfile, atlas, atlas_coverage=config["atlas_coverage"])
         else:
             write_epistate_output(outfile, thetaH, thetaL, lambdas)
 
 
-config = {'m_per_region': 5, 'regions_per_t': 300, 't': 2, "true_alpha": np.array([0.9,0.1]), "coverage": 10,
-           "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy",
-           "metadata_files":["1.npy", "2.npy", "3.npy"]}
+# config = {'m_per_region': 3, 'regions_per_t': 40, 't': 10, "true_alpha": np.array([0,0,0,0,0,0,0,0,0,1]), "coverage": 8,
+#            "models" :["celfie", "celfie-plus", "epistate"], "data_file":"output.npy","atlas_coverage":1000,
+#            "metadata_files":["1.npy", "2.npy", "3.npy"]}
 # main(config)
 #%%
+
+
+
