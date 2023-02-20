@@ -125,16 +125,17 @@ def write_celfie_plus_output(output_file, beta_tm):
     np.save(output_file, beta_tm, allow_pickle=True)
     
 def write_uxm_output(output_file, atlas, atlas_coverage=1000, u_threshold=0.25):
-    T = atlas[0].shape[0]
-    U = [np.zeros(T) for a in range(len(atlas))]
-    for t in range(T):
+    thetaH, thetaL, lambdas = atlas
+    T = lambdas[0].shape[0]
+    U = [np.zeros(T) for a in range(len(lambdas))]
+    for t in range(T): #wrong!!
         alpha = np.zeros(T)
         alpha[t] = 1
         reads = generate_mixture(atlas, alpha, atlas_coverage)
         #calc percent U
         #won't work with missing data, does not filter for length
         U_t = [calc_percent_U(mat, u_threshold=u_threshold) for mat in reads]
-        for a in range(len(atlas)):
+        for a in range(len(lambdas)):
             U[a][t] = U_t[a]
     np.save(output_file, U, allow_pickle=True)
 
@@ -160,18 +161,23 @@ def main(config):
         elif model == "celfie-plus":
             write_celfie_plus_output(outfile, beta)
         elif model == "uxm":
-            write_uxm_output(outfile, beta, config["atlas_coverage"], config["u_threshold"])
+            write_uxm_output(outfile, atlas, config["atlas_coverage"], config["u_threshold"])
         elif model == "reatlas":
             write_reatlas_output(outfile, beta, atlas_coverage=config["atlas_coverage"])
         else:
             write_epistate_output(outfile, atlas)
-
-# config = {'simulator': 'epistate', 't': 3, 'coverage': 10, 'm_per_region': 12, 'regions_per_t': 15, 'num_iterations': 1000,
-#           'atlas_coverage': 1000, 'random_restarts': 1, "stop_criterion":0.001,
-#           'theta_high': 0.8, 'theta_low': 0.2, 'lambda_high': 1, 'lambda_low': 0,
-#           "models":["epistate-plus"],
-#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/simple_3_cell_v2_data.npy",
-#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/simple_3_cell_v2_metadata_epistate-plus.npy"],
-#             "true_alpha": np.array([0.5, 0.3, 0.2])}
+            #%%
+# a = np.arange(1,26)
+# b=(a/np.sum(a))
+# config = {'simulator': 'epistate', 't': 25, 'coverage': 10, 'm_per_region': 5, 'regions_per_t': 48, 'num_iterations': 1000,
+#           'atlas_coverage': 100, 'random_restarts': 1, "stop_criterion":0.001,
+#           'theta_high': 0.9, 'theta_low': 0.1, 'lambda_high': 1, 'lambda_low': 0, "u_threshold":0.25,
+#           "models":[ "uxm", "epistate-plus", "celfie", "celfie-plus"],
+#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1.npy",
+#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_uxm.npy",
+#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_epistate-plus.npy",
+#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_celfie.npy",
+#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_celfie-plus.npy"],
+#             "true_alpha": b}
 #
 # main(config)
