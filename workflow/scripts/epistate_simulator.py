@@ -26,6 +26,7 @@
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools")
 from epiread_tools.naming_conventions import *
+from epiread_tools.em_utils import calc_percent_U
 import numpy as np
 import re
 from itertools import cycle
@@ -122,6 +123,20 @@ def write_celfie_output(output_file, beta_tm, atlas_coverage=1000): #no summing
 
 def write_celfie_plus_output(output_file, beta_tm):
     np.save(output_file, beta_tm, allow_pickle=True)
+    
+def write_uxm_output(output_file, atlas, atlas_coverage=1000, u_threshold=0.25):
+    T = atlas[0].shape[0]
+    U = [np.zeros(T) for a in range(len(atlas))]
+    for t in range(T):
+        alpha = np.zeros(T)
+        alpha[t] = 1
+        reads = generate_mixture(atlas, alpha, atlas_coverage)
+        #calc percent U
+        #won't work with missing data, does not filter for length
+        U_t = [calc_percent_U(mat, u_threshold=u_threshold) for mat in reads]
+        for a in range(len(atlas)):
+            U[a][t] = U_t[a]
+    np.save(output_file, U, allow_pickle=True)
 
 def write_reatlas_output(output_file, beta_tm, atlas_coverage=1000):
     y = [(x*atlas_coverage) for x in beta_tm]
@@ -144,6 +159,8 @@ def main(config):
             write_celfie_output(outfile, beta, atlas_coverage=config["atlas_coverage"])
         elif model == "celfie-plus":
             write_celfie_plus_output(outfile, beta)
+        elif model == "uxm":
+            write_uxm_output(outfile, beta, config["atlas_coverage"], config["u_threshold"])
         elif model == "reatlas":
             write_reatlas_output(outfile, beta, atlas_coverage=config["atlas_coverage"])
         else:
