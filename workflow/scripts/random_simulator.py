@@ -137,7 +137,7 @@ def write_reatlas_output(output_file, beta_tm, atlas_coverage=1000):
 
 def main(config):
     atlas, reads, thetaH, thetaL, lambdas = generate_data(config)
-    # save_mixture(config["data_file"], reads)
+    save_mixture(config["data_file"], reads)
     for model, outfile in zip(config["models"], config["metadata_files"]):
         if model == "celfie" or model =="sum-celfie":
             write_celfie_output(outfile, atlas, config["atlas_coverage"])
@@ -149,13 +149,5 @@ def main(config):
             write_reatlas_output(outfile, atlas, atlas_coverage=config["atlas_coverage"])
         else:
             write_epistate_output(outfile, thetaH, thetaL, lambdas)
-
-
-config = {'m_per_region': 4, 'regions_per_t': 1, 't': 3, "true_alpha": np.array([0.5, 0.3, 0.2]), "coverage": 10,
-           "models" :["uxm"], "data_file":"output.npy","atlas_coverage":100, "u_threshold":0.25,
-           "metadata_files":["1.npy"]}
-main(config)
-#%%
-
 
 

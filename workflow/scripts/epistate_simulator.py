@@ -167,17 +167,3 @@ def main(config):
         else:
             write_epistate_output(outfile, atlas)
             #%%
-# a = np.arange(1,26)
-# b=(a/np.sum(a))
-# config = {'simulator': 'epistate', 't': 25, 'coverage': 10, 'm_per_region': 5, 'regions_per_t': 48, 'num_iterations': 1000,
-#           'atlas_coverage': 100, 'random_restarts': 1, "stop_criterion":0.001,
-#           'theta_high': 0.9, 'theta_low': 0.1, 'lambda_high': 1, 'lambda_low': 0, "u_threshold":0.25,
-#           "models":[ "uxm", "epistate-plus", "celfie", "celfie-plus"],
-#           "data_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1.npy",
-#           "metadata_files": ["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_uxm.npy",
-#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_epistate-plus.npy",
-#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_celfie.npy",
-#                              "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/test_uxm_v1_metadata_celfie-plus.npy"],
-#             "true_alpha": b}
-#
-# main(config)

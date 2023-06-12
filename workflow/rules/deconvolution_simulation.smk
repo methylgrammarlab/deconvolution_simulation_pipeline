@@ -25,7 +25,7 @@
 
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models")
-from deconvolution_models.main import Celfie, CelfiePlus, Epistate, EpistatePlus, ReAtlas
+from deconvolution_models.main import Celfie, CelfieISH, Epistate, ReAtlas, UXM
 from scripts.epistate_simulator import main as epistate_simulator
 from scripts.random_simulator import main as random_simulator
 import numpy as np
@@ -34,8 +34,8 @@ import re
 
 runs = pd.read_csv(config["run_file"]).set_index("param_id")
 param_ids = runs.index
-name_to_model = {"celfie":Celfie, "celfie-plus":CelfiePlus, "epistate":Epistate, "epistate-plus":EpistatePlus,
-                 'sum-celfie':Celfie,'reatlas':ReAtlas}
+name_to_model = {"celfie":Celfie, "celfie-ish":CelfiePlus, "epistate":Epistate,
+                 'sum-celfie':Celfie,'reatlas':ReAtlas, "uxm":UXM}
 name_to_simulator = {"epistate":epistate_simulator, "random":random_simulator}
 
 rule simulate_data: #should I separate atlas from mixture?
@@ -75,6 +75,8 @@ rule run_model:
             run_config["summing"] = True
         else:
             run_config["summing"] = False
+        if wildcards.model == "uxm":
+            run_config["weights"] = False
         runner = model(run_config)
         runner.run_from_npy()
 
@@ -89,6 +91,6 @@ rule write_output:
         for filename in input:
             alpha, i = np.load(filename, allow_pickle=True)
             with open(output[0], "a+") as outfile: #dump to file
-                outfile.write(filename+"\t"+str(list(alpha))+"\t"+str(int(i))+"\n")
+                outfile.write(filename+"\t"+str(list(alpha))+"\t"+str(i)+"\n")
         #model t depth m_per_window windows_per_t thetaH thetaL lambda_high lambda_low alpha_true alpha_est
         # iterations_limit actual_iterations
